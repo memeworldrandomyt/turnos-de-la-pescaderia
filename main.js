@@ -23,7 +23,7 @@
 const TEACHER_PASSWORD = "PR0F3SOR";
 
 // Pega aquí la URL de tu Google Apps Script Web App.
-const GOOGLE_SCRIPT_URL = "";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVXEBluNkK66Ve3UNPNYnzUVflrgbNzzRs2-AjvjrpC3OU9TXx3gGkqzq22zBNW521/exec";
 
 let queue = [];
 let className = "Nombre de la clase";
