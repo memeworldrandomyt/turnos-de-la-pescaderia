@@ -1,26 +1,32 @@
 /*
-  Organizador de turnos
+  Organizador de turnos conectado a Google Sheets
 
-  IMPORTANTE PARA GOOGLE SHEETS:
-  1. Crea un Google Sheet.
-  2. Abre Extensiones > Apps Script.
-  3. Pega el código de Apps Script incluido al final de este archivo.
-  4. Despliega como "Aplicación web".
-  5. Copia la URL del despliegue y pégala en GOOGLE_SCRIPT_URL.
+  Esta versión NO usa localStorage.
+  La cola y el nombre de la clase se leen y se guardan en Google Sheets.
+
+  PASOS:
+  1. Crea un Google Sheets.
+  2. Crea dos hojas dentro del archivo:
+     - Estado
+     - Historial
+  3. En la hoja "Estado":
+     A1: className
+     B1: Nombre de la clase
+     A2: queue
+     B2: []
+  4. Abre Extensiones > Apps Script.
+  5. Pega el código de Apps Script incluido al final de este archivo.
+  6. Implementa como "Aplicación web".
+  7. Copia la URL del despliegue y pégala en GOOGLE_SCRIPT_URL.
 */
 
 const TEACHER_PASSWORD = "PR0F3SOR";
 
 // Pega aquí la URL de tu Google Apps Script Web App.
-// Ejemplo: const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/XXXXX/exec";
 const GOOGLE_SCRIPT_URL = "";
 
-const STORAGE_KEYS = {
-  className: "turnos_class_name",
-  queue: "turnos_queue"
-};
-
-let queue = loadQueue();
+let queue = [];
+let className = "Nombre de la clase";
 
 const classNameElement = document.getElementById("className");
 const classNameInput = document.getElementById("classNameInput");
@@ -44,11 +50,7 @@ const deleteTurnsButton = document.getElementById("deleteTurnsButton");
 
 document.addEventListener("DOMContentLoaded", init);
 
-function init() {
-  const savedClassName = localStorage.getItem(STORAGE_KEYS.className) || "Nombre de la clase";
-  classNameElement.textContent = savedClassName;
-  classNameInput.value = savedClassName === "Nombre de la clase" ? "" : savedClassName;
-
+async function init() {
   renderQueue();
 
   document.querySelectorAll(".group-btn").forEach((button) => {
@@ -69,21 +71,45 @@ function init() {
   saveClassNameButton.addEventListener("click", saveClassName);
   nextGroupButton.addEventListener("click", nextGroup);
   deleteTurnsButton.addEventListener("click", deleteTurns);
+
+  await loadStateFromGoogleSheets();
 }
 
-function requestTurn(groupNumber) {
-  // Si el grupo ya estaba en la cola, se elimina para colocarlo al final.
+async function loadStateFromGoogleSheets() {
+  if (!GOOGLE_SCRIPT_URL) {
+    showStatus("Falta configurar la URL de Google Sheets en main.js.");
+    return;
+  }
+
+  try {
+    const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getState`);
+    const data = await response.json();
+
+    className = data.className || "Nombre de la clase";
+    queue = Array.isArray(data.queue) ? data.queue.map(String) : [];
+
+    classNameElement.textContent = className;
+    classNameInput.value = className === "Nombre de la clase" ? "" : className;
+
+    renderQueue();
+    showStatus("Datos cargados desde Google Sheets.");
+  } catch (error) {
+    console.error("No se pudo leer Google Sheets:", error);
+    showStatus("No se pudo cargar Google Sheets. Revisa la URL y el despliegue.");
+  }
+}
+
+async function requestTurn(groupNumber) {
   queue = queue.filter((group) => group !== groupNumber);
   queue.push(groupNumber);
 
-  saveQueue();
   renderQueue();
-
   showStatus(`Grupo ${groupNumber} añadido al final de la cola.`);
-  saveTurnToGoogleSheets(groupNumber, "solicita_turno");
+
+  await saveStateToGoogleSheets(groupNumber, "solicita_turno");
 }
 
-function nextGroup() {
+async function nextGroup() {
   if (queue.length === 0) {
     showStatus("No hay grupos en cola.");
     renderQueue();
@@ -91,23 +117,21 @@ function nextGroup() {
   }
 
   const finishedGroup = queue.shift();
-  saveQueue();
   renderQueue();
 
   showStatus(`Avanza la cola. Sale el grupo ${finishedGroup}.`);
-  saveTurnToGoogleSheets(finishedGroup, "siguiente_grupo");
+  await saveStateToGoogleSheets(finishedGroup, "siguiente_grupo");
 }
 
-function deleteTurns() {
+async function deleteTurns() {
   const confirmed = confirm("¿Seguro que quieres eliminar todos los turnos?");
   if (!confirmed) return;
 
   queue = [];
-  saveQueue();
   renderQueue();
 
   showStatus("Todos los turnos han sido eliminados.");
-  saveTurnToGoogleSheets("", "eliminar_turnos");
+  await saveStateToGoogleSheets("", "eliminar_turnos");
 }
 
 function renderQueue() {
@@ -157,7 +181,7 @@ function loginTeacher() {
   }
 }
 
-function saveClassName() {
+async function saveClassName() {
   const newClassName = classNameInput.value.trim();
 
   if (!newClassName) {
@@ -165,24 +189,40 @@ function saveClassName() {
     return;
   }
 
-  localStorage.setItem(STORAGE_KEYS.className, newClassName);
-  classNameElement.textContent = newClassName;
-  showStatus(`Nombre de la clase cambiado a "${newClassName}".`);
+  className = newClassName;
+  classNameElement.textContent = className;
 
-  saveTurnToGoogleSheets("", "cambia_nombre_clase", {
-    className: newClassName
-  });
+  showStatus(`Nombre de la clase cambiado a "${className}".`);
+  await saveStateToGoogleSheets("", "cambia_nombre_clase");
 }
 
-function saveQueue() {
-  localStorage.setItem(STORAGE_KEYS.queue, JSON.stringify(queue));
-}
+async function saveStateToGoogleSheets(groupNumber, action) {
+  if (!GOOGLE_SCRIPT_URL) {
+    showStatus("Falta configurar la URL de Google Sheets en main.js.");
+    return;
+  }
 
-function loadQueue() {
+  const payload = {
+    action: "saveState",
+    timestamp: new Date().toISOString(),
+    className,
+    groupNumber,
+    eventType: action,
+    queue: [...queue]
+  };
+
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.queue)) || [];
-  } catch {
-    return [];
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(payload)
+    });
+  } catch (error) {
+    console.error("No se pudo guardar en Google Sheets:", error);
+    showStatus("No se pudo guardar en Google Sheets.");
   }
 }
 
@@ -195,44 +235,84 @@ function showStatus(message) {
   }, 3500);
 }
 
-async function saveTurnToGoogleSheets(groupNumber, action, extraData = {}) {
-  if (!GOOGLE_SCRIPT_URL) {
-    console.info("Google Sheets no configurado. Acción local:", { groupNumber, action, extraData });
-    return;
-  }
-
-  const payload = {
-    timestamp: new Date().toISOString(),
-    className: classNameElement.textContent,
-    groupNumber,
-    action,
-    queue: [...queue],
-    ...extraData
-  };
-
-  try {
-    await fetch(GOOGLE_SCRIPT_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
-  } catch (error) {
-    console.error("No se pudo guardar en Google Sheets:", error);
-  }
-}
-
 /*
 CÓDIGO PARA GOOGLE APPS SCRIPT
 
-Pega esto en Extensiones > Apps Script dentro de tu Google Sheet:
+Pega este código completo en Extensiones > Apps Script:
+
+function doGet(e) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const estado = getOrCreateSheet_(ss, "Estado");
+
+  setupEstado_(estado);
+
+  const className = estado.getRange("B1").getValue() || "Nombre de la clase";
+  const queueText = estado.getRange("B2").getValue() || "[]";
+
+  let queue = [];
+  try {
+    queue = JSON.parse(queueText);
+  } catch (error) {
+    queue = [];
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify({
+      className: className,
+      queue: queue
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
 
 function doPost(e) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const estado = getOrCreateSheet_(ss, "Estado");
+  const historial = getOrCreateSheet_(ss, "Historial");
+
+  setupEstado_(estado);
+  setupHistorial_(historial);
+
   const data = JSON.parse(e.postData.contents);
 
+  estado.getRange("A1").setValue("className");
+  estado.getRange("B1").setValue(data.className || "Nombre de la clase");
+  estado.getRange("A2").setValue("queue");
+  estado.getRange("B2").setValue(JSON.stringify(data.queue || []));
+
+  historial.appendRow([
+    data.timestamp,
+    data.className,
+    data.groupNumber,
+    data.eventType,
+    JSON.stringify(data.queue || [])
+  ]);
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function getOrCreateSheet_(ss, name) {
+  let sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+  }
+  return sheet;
+}
+
+function setupEstado_(sheet) {
+  if (!sheet.getRange("A1").getValue()) {
+    sheet.getRange("A1").setValue("className");
+    sheet.getRange("B1").setValue("Nombre de la clase");
+  }
+
+  if (!sheet.getRange("A2").getValue()) {
+    sheet.getRange("A2").setValue("queue");
+    sheet.getRange("B2").setValue("[]");
+  }
+}
+
+function setupHistorial_(sheet) {
   if (sheet.getLastRow() === 0) {
     sheet.appendRow([
       "Fecha",
@@ -242,17 +322,5 @@ function doPost(e) {
       "Cola completa"
     ]);
   }
-
-  sheet.appendRow([
-    data.timestamp,
-    data.className,
-    data.groupNumber,
-    data.action,
-    JSON.stringify(data.queue)
-  ]);
-
-  return ContentService
-    .createTextOutput(JSON.stringify({ ok: true }))
-    .setMimeType(ContentService.MimeType.JSON);
 }
 */
