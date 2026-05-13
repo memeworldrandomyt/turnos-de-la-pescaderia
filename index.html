@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Turnos pescaderia</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="background-shape shape-one"></div>
+  <div class="background-shape shape-two"></div>
+  <div class="background-shape shape-three"></div>
+
+  <header class="app-header">
+    <div class="header-card">
+      <h1 id="className">Nombre de la clase</h1>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="buttons-panel">
+      <div class="panel-title">
+        <h2>Solicitar turno</h2>
+      </div>
+
+      <div id="groupButtons" class="group-grid" aria-label="Botones de grupos">
+        <button class="group-btn color-1" data-group="1">1</button>
+        <button class="group-btn color-2" data-group="2">2</button>
+        <button class="group-btn color-3" data-group="3">3</button>
+        <button class="group-btn color-4" data-group="4">4</button>
+        <button class="group-btn color-5" data-group="5">5</button>
+        <button class="group-btn color-6" data-group="6">6</button>
+        <button class="group-btn color-7" data-group="7">7</button>
+        <button class="group-btn color-8" data-group="8">8</button>
+      </div>
+
+      <p id="statusMessage" class="status-message" role="status"></p>
+    </section>
+
+    <aside class="queue-panel">
+      <div class="panel-title">
+        <h2>Cola de turnos</h2>
+      </div>
+      <ol id="queueList" class="queue-list"></ol>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <button id="openTeacherPanel" class="teacher-open-btn">Panel de profesor</button>
+  </footer>
+
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="teacherPanelTitle">
+      <button id="closeTeacherPanel" class="close-btn" aria-label="Cerrar panel">×</button>
+
+      <div id="passwordView">
+        <h2 id="teacherPanelTitle">Acceso profesor</h2>
+        <label for="passwordInput">Contraseña</label>
+        <input id="passwordInput" type="password" placeholder="Introduce la contraseña" />
+        <button id="loginButton" class="primary-btn">Entrar</button>
+        <p id="passwordError" class="error-message"></p>
+      </div>
+
+      <div id="teacherView" class="hidden">
+        <h2>Panel de profesor</h2>
+
+        <div class="form-group">
+          <label for="classNameInput">Nombre de la clase</label>
+          <input id="classNameInput" type="text" placeholder="Ejemplo: 6ºA Primaria" />
+          <button id="saveClassNameButton" class="primary-btn">Guardar nombre</button>
+        </div>
+
+        <div class="current-group-box">
+          <p>Grupo actual</p>
+          <strong id="currentGroup">Sin turno</strong>
+        </div>
+
+        <button id="nextGroupButton" class="next-btn">Siguiente grupo</button>
+        <button id="deleteTurnsButton" class="danger-btn">Eliminar turnos</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
