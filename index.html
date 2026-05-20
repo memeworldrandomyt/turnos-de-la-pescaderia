@@ -1,47 +1,143 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestor de Clases y Colas</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Turnos de la pescadería</title>
+
+  <link rel="stylesheet" href="styles.css" />
+
+  <script src="https://accounts.google.com/gsi/client"></script>
+  <script src="https://apis.google.com/js/api.js"></script>
 </head>
+
 <body>
-  <div class="container">
-    <!-- Visualización en tiempo real -->
-    <header>
-      <h1 id="classNameDisplay">Cargando clase...</h1>
-      <span class="badge" id="statusBadge">Conectado</span>
-    </header>
+  <header class="app-header">
+    <h1 id="classNameTitle">Turnos de la pescadería</h1>
+  </header>
 
-    <main>
-      <section class="queue-section">
-        <h2>Lista de Espera Actual</h2>
-        <ul id="queueContainer">
-          <!-- Los elementos de la cola se inyectarán aquí asíncronamente -->
-        </ul>
-      </section>
+  <main class="layout">
+    <aside class="queue-panel">
+      <div class="panel-title">
+        <h2>Cola de grupos</h2>
+        <span id="queueCount">0</span>
+      </div>
 
-      <!-- Panel de Control / Formulario de Envío -->
-      <section class="control-section">
-        <h2>Panel de Control</h2>
-        <form id="updateForm">
-          <div class="form-group">
-            <label for="classNameInput">Modificar Nombre de Clase:</label>
-            <input type="text" id="classNameInput" placeholder="Ej. Matemáticas Avanzadas">
+      <div id="currentGroupBox" class="current-box empty">
+        <span>Turno actual</span>
+        <strong id="currentGroupText">Ninguno</strong>
+      </div>
+
+      <ol id="queueList" class="queue-list"></ol>
+    </aside>
+
+    <section class="groups-panel">
+      <div class="groups-grid" id="groupsGrid">
+        <button class="group-button" data-group="1">Grupo 1</button>
+        <button class="group-button" data-group="2">Grupo 2</button>
+        <button class="group-button" data-group="3">Grupo 3</button>
+        <button class="group-button" data-group="4">Grupo 4</button>
+        <button class="group-button" data-group="5">Grupo 5</button>
+        <button class="group-button" data-group="6">Grupo 6</button>
+        <button class="group-button" data-group="7">Grupo 7</button>
+        <button class="group-button" data-group="8">Grupo 8</button>
+      </div>
+
+      <p id="statusMessage" class="status-message">
+        Pulsa “Conectar con Google” para empezar.
+      </p>
+    </section>
+  </main>
+
+  <footer class="bottom-bar">
+    <button id="connectGoogleButton" class="google-button">
+      Conectar con Google
+    </button>
+
+    <button id="openTeacherPanel" class="teacher-button">
+      Panel de profesor
+    </button>
+  </footer>
+
+  <div id="modalBackdrop" class="modal-backdrop hidden">
+    <section class="modal">
+      <button id="closeTeacherPanel" class="close-button" aria-label="Cerrar panel">
+        ×
+      </button>
+
+      <div id="loginView">
+        <h2>Acceso profesor</h2>
+
+        <p>
+          Introduce la contraseña para modificar la clase y avanzar turnos.
+        </p>
+
+        <label for="passwordInput">Contraseña</label>
+
+        <input
+          id="passwordInput"
+          type="password"
+          autocomplete="current-password"
+          placeholder="Contraseña"
+        />
+
+        <button id="loginButton" class="primary-button">
+          Entrar
+        </button>
+
+        <p id="loginError" class="error-message"></p>
+      </div>
+
+      <div id="teacherView" class="hidden">
+        <h2>Panel de profesor</h2>
+
+        <div class="field-row">
+          <label for="classNameInput">Nombre de la clase</label>
+
+          <div class="input-action">
+            <input
+              id="classNameInput"
+              type="text"
+              placeholder="Ej: 6ºA Pescadería"
+            />
+
+            <button id="saveClassButton" class="primary-button">
+              Guardar
+            </button>
           </div>
-          
-          <div class="form-group">
-            <label for="groupInput">Añadir Número de Grupo a la Cola:</label>
-            <input type="number" id="groupInput" placeholder="Ej. 4">
+        </div>
+
+        <div class="teacher-current">
+          <span>Grupo actual</span>
+          <strong id="teacherCurrentGroup">Ninguno</strong>
+        </div>
+
+        <div class="teacher-actions">
+          <div class="teacher-action-block">
+            <button id="nextGroupButton" class="next-button">
+              Siguiente grupo
+            </button>
+
+            <p id="nextGroupWaitMessage" class="wait-message hidden">
+              ESPERA UN POCO JUAN
+            </p>
           </div>
 
-          <button type="submit" id="submitBtn">Actualizar en Sheets</button>
-        </form>
-      </section>
-    </main>
+          <div class="teacher-action-block">
+            <button id="clearQueueButton" class="danger-button">
+              Vaciar cola
+            </button>
+
+            <p id="clearQueueWaitMessage" class="wait-message hidden">
+              ESPERA UN POCO JUAN
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
-  <script src="script.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>
