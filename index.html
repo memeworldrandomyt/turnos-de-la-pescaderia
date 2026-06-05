@@ -3,137 +3,83 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Turnos de la pescadería</title>
-
+  <title>Organizador de Turnos</title>
   <link rel="stylesheet" href="styles.css" />
-
-  <script src="https://accounts.google.com/gsi/client"></script>
-  <script src="https://apis.google.com/js/api.js"></script>
 </head>
-
 <body>
+  <div class="background-shape shape-one"></div>
+  <div class="background-shape shape-two"></div>
+  <div class="background-shape shape-three"></div>
+
   <header class="app-header">
-    <h1 id="classNameTitle">Turnos de la pescadería</h1>
+    <div class="header-card">
+      <h1 id="className">Cargando clase...</h1>
+      <p id="syncInfo" class="sync-info">Conectando con archivo local...</p>
+    </div>
   </header>
 
   <main class="layout">
-    <aside class="queue-panel">
+    <section class="buttons-panel">
       <div class="panel-title">
-        <h2>Cola de grupos</h2>
-        <span id="queueCount">0</span>
+        <h2>Solicitar turno</h2>
       </div>
 
-      <div id="currentGroupBox" class="current-box empty">
-        <span>Turno actual</span>
-        <strong id="currentGroupText">Ninguno</strong>
+      <div id="groupButtons" class="group-grid" aria-label="Botones de grupos">
+        <button class="group-btn color-1" data-group="1">1</button>
+        <button class="group-btn color-2" data-group="2">2</button>
+        <button class="group-btn color-3" data-group="3">3</button>
+        <button class="group-btn color-4" data-group="4">4</button>
+        <button class="group-btn color-5" data-group="5">5</button>
+        <button class="group-btn color-6" data-group="6">6</button>
+        <button class="group-btn color-7" data-group="7">7</button>
+        <button class="group-btn color-8" data-group="8">8</button>
       </div>
 
+      <p id="statusMessage" class="status-message" role="status"></p>
+    </section>
+
+    <aside class="queue-panel">
+      <div class="panel-title queue-title-row">
+        <h2>Cola de turnos</h2>
+        <button id="refreshButton" class="refresh-btn" title="Actualizar ahora">Actualizar</button>
+      </div>
       <ol id="queueList" class="queue-list"></ol>
     </aside>
-
-    <section class="groups-panel">
-      <div class="groups-grid" id="groupsGrid">
-        <button class="group-button" data-group="1">Grupo 1</button>
-        <button class="group-button" data-group="2">Grupo 2</button>
-        <button class="group-button" data-group="3">Grupo 3</button>
-        <button class="group-button" data-group="4">Grupo 4</button>
-        <button class="group-button" data-group="5">Grupo 5</button>
-        <button class="group-button" data-group="6">Grupo 6</button>
-        <button class="group-button" data-group="7">Grupo 7</button>
-        <button class="group-button" data-group="8">Grupo 8</button>
-      </div>
-
-      <p id="statusMessage" class="status-message">
-        Pulsa “Conectar con Google” para empezar.
-      </p>
-    </section>
   </main>
 
-  <footer class="bottom-bar">
-    <button id="connectGoogleButton" class="google-button">
-      Conectar con Google
-    </button>
-
-    <button id="openTeacherPanel" class="teacher-button">
-      Panel de profesor
-    </button>
+  <footer class="footer">
+    <button id="openTeacherPanel" class="teacher-open-btn">Panel de profesor</button>
   </footer>
 
-  <div id="modalBackdrop" class="modal-backdrop hidden">
-    <section class="modal">
-      <button id="closeTeacherPanel" class="close-button" aria-label="Cerrar panel">
-        ×
-      </button>
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="teacherPanelTitle">
+      <button id="closeTeacherPanel" class="close-btn" aria-label="Cerrar panel">×</button>
 
-      <div id="loginView">
-        <h2>Acceso profesor</h2>
-
-        <p>
-          Introduce la contraseña para modificar la clase y avanzar turnos.
-        </p>
-
+      <div id="passwordView">
+        <h2 id="teacherPanelTitle">Acceso profesor</h2>
         <label for="passwordInput">Contraseña</label>
-
-        <input
-          id="passwordInput"
-          type="password"
-          autocomplete="current-password"
-          placeholder="Contraseña"
-        />
-
-        <button id="loginButton" class="primary-button">
-          Entrar
-        </button>
-
-        <p id="loginError" class="error-message"></p>
+        <input id="passwordInput" type="password" placeholder="Introduce la contraseña" />
+        <button id="loginButton" class="primary-btn">Entrar</button>
+        <p id="passwordError" class="error-message"></p>
       </div>
 
       <div id="teacherView" class="hidden">
         <h2>Panel de profesor</h2>
 
-        <div class="field-row">
+        <div class="form-group">
           <label for="classNameInput">Nombre de la clase</label>
-
-          <div class="input-action">
-            <input
-              id="classNameInput"
-              type="text"
-              placeholder="Ej: 6ºA Pescadería"
-            />
-
-            <button id="saveClassButton" class="primary-button">
-              Guardar
-            </button>
-          </div>
+          <input id="classNameInput" type="text" placeholder="Ejemplo: 6ºA Primaria" autocomplete="off" />
+          <p class="help-text">Cada clase conserva su propia cola en un archivo local.</p>
+          <button id="saveClassNameButton" class="primary-btn">Guardar / cambiar clase</button>
         </div>
 
-        <div class="teacher-current">
-          <span>Grupo actual</span>
-          <strong id="teacherCurrentGroup">Ninguno</strong>
+        <div class="current-group-box">
+          <p>Grupo actual</p>
+          <strong id="currentGroup">Sin turno</strong>
         </div>
 
-        <div class="teacher-actions">
-          <div class="teacher-action-block">
-            <button id="nextGroupButton" class="next-button">
-              Siguiente grupo
-            </button>
-
-            <p id="nextGroupWaitMessage" class="wait-message hidden">
-              ESPERA UN POCO JUAN
-            </p>
-          </div>
-
-          <div class="teacher-action-block">
-            <button id="clearQueueButton" class="danger-button">
-              Vaciar cola
-            </button>
-
-            <p id="clearQueueWaitMessage" class="wait-message hidden">
-              ESPERA UN POCO JUAN
-            </p>
-          </div>
-        </div>
+        <button id="nextGroupButton" class="next-btn">Siguiente grupo</button>
+        <button id="deleteTurnsButton" class="danger-btn">Eliminar turnos de esta clase</button>
       </div>
     </section>
   </div>
