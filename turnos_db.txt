@@ -1,0 +1,10 @@
+{
+  "activeClass": "Nombre de la clase",
+  "classes": {
+    "Nombre de la clase": {
+      "queue": [],
+      "updatedAt": null
+    }
+  },
+  "history": []
+}
